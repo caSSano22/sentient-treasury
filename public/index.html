@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentient Treasury — AI Treasury Agent</title>
+<meta name="description" content="Autonomous AI agent for on-chain capital management using WDK by Tether">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06060e;
+    --card: rgba(17, 20, 39, 0.7);
+    --card-border: rgba(255,255,255,0.06);
+    --card-glow: rgba(99, 102, 241, 0.08);
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f1f5f9;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --green: #4ade80;
+    --green-bg: rgba(74, 222, 128, 0.1);
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%);
+  }
+
+  /* Header */
+  header {
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(20px);
+    background: rgba(6,6,14,0.8);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+  }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; }
+  .logo-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 99px;
+    background: var(--green-bg); border: 1px solid rgba(74,222,128,0.2);
+    font-size: 12px; color: var(--green); font-weight: 500;
+  }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .network-pill {
+    padding: 5px 10px; border-radius: 99px; font-size: 11px; font-weight: 500;
+    background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.2); color: var(--yellow);
+  }
+
+  /* Main */
+  .main { padding: 24px 32px; max-width: 1280px; margin: 0 auto; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .card:hover {
+    border-color: rgba(99,102,241,0.15);
+    box-shadow: 0 4px 30px var(--card-glow);
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .animate { animation: fadeUp 0.4s ease-out both; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; } .d3 { animation-delay: 0.15s; } .d4 { animation-delay: 0.2s; }
+
+  /* Metrics */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .metric-card {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 18px; backdrop-filter: blur(12px);
+    transition: transform 0.2s, box-shadow 0.3s;
+  }
+  .metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--card-glow); }
+  .metric-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 10px; }
+  .metric-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-weight: 700; color: var(--text-bright); line-height: 1; letter-spacing: -0.02em; }
+  .metric-sub { font-size: 11px; color: var(--text-dim); margin-top: 5px; }
+  .green { color: var(--green) !important; }
+  .purple { color: var(--accent2) !important; }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  /* Wallet */
+  .wallet-addr {
+    font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--accent); word-break: break-all; margin-top: 8px;
+    background: rgba(99,102,241,0.06); padding: 10px 12px;
+    border-radius: 8px; border: 1px solid rgba(99,102,241,0.12);
+    cursor: pointer; transition: background 0.2s;
+  }
+  .wallet-addr:hover { background: rgba(99,102,241,0.12); }
+  .wallet-addr-hint { font-size: 10px; color: var(--text-dim); margin-top: 4px; text-align: right; }
+
+  /* Position */
+  .position-box {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.08));
+    border: 1px solid rgba(59,130,246,0.15); border-radius: 12px; padding: 16px;
+  }
+  .position-label { font-size: 10px; color: var(--blue); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-weight: 600; }
+  .position-value { font-size: 22px; font-weight: 700; color: #93c5fd; letter-spacing: -0.02em; }
+  .position-detail { font-size: 12px; color: rgba(147,197,253,0.6); margin-top: 4px; }
+
+  /* Yield */
+  .yield-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); transition: background 0.2s; }
+  .yield-row:last-child { border-bottom: none; }
+  .yield-row:hover { background: rgba(255,255,255,0.02); margin: 0 -8px; padding: 10px 8px; border-radius: 6px; }
+  .yield-name { font-size: 13px; color: var(--text); font-weight: 500; }
+  .yield-protocol { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .yield-apy { font-size: 15px; font-weight: 700; color: var(--green); }
+  .yield-risk { font-size: 10px; padding: 2px 7px; border-radius: 99px; margin-left: 6px; font-weight: 500; }
+  .risk-low { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .risk-medium { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .best-badge { font-size: 9px; background: rgba(99,102,241,0.12); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); padding: 2px 6px; border-radius: 99px; margin-left: 6px; font-weight: 600; }
+
+  /* Chart */
+  .chart-container { position: relative; width: 100%; height: 200px; margin-top: 8px; }
+  .chart-container canvas { width: 100% !important; height: 100% !important; }
+
+  /* Buttons */
+  .btn {
+    width: 100%; padding: 11px; border: none; border-radius: 10px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 15px rgba(99,102,241,0.25);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(99,102,241,0.35); transform: translateY(-1px); }
+  .btn-primary:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; transform: none; }
+  .btn-green {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16,185,129,0.25);
+  }
+  .btn-green:hover { box-shadow: 0 6px 20px rgba(16,185,129,0.35); transform: translateY(-1px); }
+  .btn-green:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  /* Send Form */
+  .send-form { display: flex; flex-direction: column; gap: 12px; }
+  .form-group label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 5px; display: block; }
+  .form-group input {
+    width: 100%; padding: 10px 12px;
+    background: rgba(15,15,26,0.8); border: 1px solid var(--card-border);
+    border-radius: 10px; color: var(--text); font-size: 13px;
+    font-family: 'Inter', sans-serif; outline: none; transition: border 0.2s;
+  }
+  .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+  .form-group input::placeholder { color: #334155; }
+  .send-status { font-size: 11px; padding: 9px 12px; border-radius: 8px; display: none; font-weight: 500; }
+  .send-status.success { display: block; background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .send-status.error { display: block; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .send-status.loading { display: block; background: rgba(99,102,241,0.1); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); }
+
+  /* Transaction History */
+  .tx-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-to { font-size: 11px; font-family: monospace; color: var(--accent); }
+  .tx-amount { font-size: 13px; font-weight: 600; color: var(--red); }
+  .tx-time { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .tx-link { font-size: 10px; color: var(--accent2); text-decoration: none; transition: color 0.2s; }
+  .tx-link:hover { color: var(--accent); text-decoration: underline; }
+
+  /* Activity Log */
+  .log-entry { padding: 14px 0; border-bottom: 1px solid var(--card-border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .log-id { font-size: 11px; font-weight: 600; color: var(--accent); font-family: monospace; }
+  .log-time { font-size: 10px; color: #475569; }
+  .log-action { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; margin-bottom: 6px; }
+  .action-DEPOSIT { background: var(--green-bg); color: var(--green); }
+  .action-WITHDRAW { background: rgba(248,113,113,0.1); color: var(--red); }
+  .action-REBALANCE { background: rgba(251,191,36,0.1); color: var(--yellow); }
+  .action-HOLD { background: rgba(255,255,255,0.03); color: var(--text-dim); border: 1px solid var(--card-border); }
+  .log-reasoning { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  .log-step { font-size: 11px; color: #475569; margin-top: 3px; }
+  .log-step span { color: var(--text-dim); }
+  .tx-hash-link { font-size: 10px; font-family: monospace; color: var(--accent); margin-top: 4px; display: inline-block; }
+
+  /* Confidence Bar */
+  .confidence-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 8px; overflow: hidden; }
+  .confidence-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+  .empty { font-size: 12px; color: #334155; text-align: center; padding: 24px 0; }
+
+  /* Data Source Badge */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 99px; letter-spacing: 0.06em;
+  }
+  .live-badge.live { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .live-badge.fallback { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+
+  /* Tether Info */
+  .tether-section { margin-bottom: 14px; }
+  .tether-card {
+    background: linear-gradient(135deg, rgba(80,175,149,0.08), rgba(34,139,105,0.08));
+    border: 1px solid rgba(80,175,149,0.15); border-radius: 14px; padding: 18px;
+  }
+  .tether-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(80,175,149,0.08); }
+  .tether-row:last-child { border-bottom: none; }
+  .tether-icon { font-size: 20px; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .tether-icon.usdt { background: rgba(80,175,149,0.15); }
+  .tether-icon.xaut { background: rgba(255,215,0,0.15); }
+  .tether-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+  .tether-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .tether-balance { font-size: 16px; font-weight: 700; color: #50af95; margin-left: auto; }
+  .tether-contract { font-size: 9px; font-family: monospace; color: var(--text-dim); margin-top: 4px; word-break: break-all; }
+
+  /* Strategy Card */
+  .strategy-text { font-size: 12px; color: #94a3b8; line-height: 1.6; font-style: italic; background: rgba(99,102,241,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    header { padding: 12px 16px; }
+  }
+
+  /* Swap */
+  .swap-box { display: flex; flex-direction: column; gap: 12px; }
+  .swap-token-row { display: flex; gap: 10px; align-items: flex-end; }
+  .swap-token-row .form-group { flex: 1; }
+  .swap-token-row select {
+    width: 100%; padding: 10px 12px;
+    background: rgba(15,15,26,0.8); border: 1px solid var(--card-border);
+    border-radius: 10px; color: var(--text); font-size: 13px;
+    font-family: 'Inter', sans-serif; outline: none; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .swap-token-row select:focus { border-color: var(--accent); }
+  .swap-divider { display: flex; justify-content: center; padding: 2px 0; }
+  .swap-divider-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+    color: var(--accent); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .swap-divider-btn:hover { background: rgba(99,102,241,0.2); transform: rotate(180deg); }
+  .swap-quote {
+    background: rgba(15,15,26,0.6); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 12px; font-size: 12px; display: none;
+  }
+  .swap-quote.visible { display: block; }
+  .swap-quote-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .swap-quote-label { color: var(--text-dim); }
+  .swap-quote-value { color: var(--text); font-weight: 500; }
+  .btn-swap {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white; box-shadow: 0 4px 15px rgba(245,158,11,0.25);
+  }
+  .btn-swap:hover { box-shadow: 0 6px 20px rgba(245,158,11,0.35); transform: translateY(-1px); }
+  .btn-swap:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; transform: none; }
+  .swap-status { font-size: 11px; padding: 9px 12px; border-radius: 8px; display: none; font-weight: 500; }
+  .swap-status.success { display: block; background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .swap-status.error { display: block; background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .swap-status.loading { display: block; background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
+  .token-bal { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+  .swap-hist-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+  .swap-hist-row:last-child { border-bottom: none; }
+  .swap-hist-pair { font-size: 12px; font-weight: 600; color: var(--text); }
+  .swap-hist-detail { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .swap-hist-amount { font-size: 12px; font-weight: 600; color: var(--green); }
+
+  /* Chip Buttons */
+  .chip-btn {
+    padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 500;
+    background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.15);
+    color: var(--text); cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .chip-btn:hover { background: rgba(99,102,241,0.18); border-color: var(--accent); color: var(--accent); }
+
+  /* AI Chat */
+  .ai-msg { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start; }
+  .ai-msg-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .ai-msg-bubble {
+    max-width: 85%; padding: 10px 14px; border-radius: 14px;
+    font-size: 12.5px; line-height: 1.6; word-wrap: break-word;
+  }
+  .ai-bubble-ai {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.08));
+    border: 1px solid rgba(99,102,241,0.15); border-top-left-radius: 4px;
+    color: var(--text);
+  }
+  .ai-bubble-user {
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15);
+    border-top-right-radius: 4px; margin-left: auto; color: var(--text);
+  }
+  .ai-msg-user { flex-direction: row-reverse; }
+  .ai-msg-user .ai-msg-icon { background: rgba(74,222,128,0.12); }
+  .ai-msg-model { font-size: 9px; color: var(--text-dim); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+  .ai-msg-model span { background: rgba(99,102,241,0.1); padding: 1px 6px; border-radius: 99px; color: var(--accent); font-weight: 600; }
+  .ai-typing { display: flex; gap: 4px; padding: 6px 0; }
+  .ai-typing-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent); opacity: 0.4;
+    animation: typingBounce 1.4s infinite ease-in-out;
+  }
+  .ai-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.1); }
+  }
+  #ai-chat-area::-webkit-scrollbar { width: 4px; }
+  #ai-chat-area::-webkit-scrollbar-track { background: transparent; }
+  #ai-chat-area::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+
+  /* Live Prices */
+  .price-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--card-border);
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-icon { font-size: 18px; margin-right: 10px; }
+  .price-symbol { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+  .price-value { font-size: 16px; font-weight: 700; color: var(--text-bright); }
+  .price-change { font-size: 11px; font-weight: 600; margin-left: 8px; }
+  .price-change.up { color: var(--green); }
+  .price-change.down { color: var(--red); }
+
+  /* Smart Rules */
+  .rule-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; margin-bottom: 6px; border-radius: 8px;
+    background: rgba(251,191,36,0.04); border: 1px solid rgba(251,191,36,0.1);
+  }
+  .rule-label { font-size: 12px; color: var(--text); flex: 1; }
+  .rule-badge { font-size: 9px; padding: 2px 6px; border-radius: 99px; background: var(--green-bg); color: var(--green); font-weight: 600; }
+  .rule-delete { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .rule-delete:hover { color: var(--red); }
+
+  /* Reasoning Trail */
+  .reason-step {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid rgba(74,222,128,0.06);
+  }
+  .reason-step:last-child { border-bottom: none; }
+  .reason-num {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: #fff; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .reason-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .reason-label { font-size: 10px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <div>
+      <div class="logo-text">Sentient Treasury</div>
+      <div class="logo-sub">Autonomous AI Capital Management · WDK by Tether</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="network-pill" id="network-badge">Sepolia Testnet</span>
+    <div class="status-pill">
+      <div class="pulse"></div>
+      Agent Active
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric-card animate d1">
+      <div class="metric-icon" style="background: var(--green-bg);">💰</div>
+      <div class="metric-label">USDT Balance</div>
+      <div class="metric-value green" id="usdt-balance">—</div>
+      <div class="metric-sub">Available to deploy</div>
+    </div>
+    <div class="metric-card animate d2">
+      <div class="metric-icon" style="background: rgba(99,102,241,0.1);">⛽</div>
+      <div class="metric-label">ETH Balance</div>
+      <div class="metric-value" id="eth-balance">—</div>
+      <div class="metric-sub">For gas fees</div>
+    </div>
+    <div class="metric-card animate d3">
+      <div class="metric-icon" style="background: rgba(139,92,246,0.1);">🧠</div>
+      <div class="metric-label">Agent Cycles</div>
+      <div class="metric-value purple" id="cycle-count">—</div>
+      <div class="metric-sub">Autonomous decisions</div>
+    </div>
+    <div class="metric-card animate d4">
+      <div class="metric-icon" style="background: var(--green-bg);">📈</div>
+      <div class="metric-label">Yield Earned</div>
+      <div class="metric-value green" id="yield-earned">—</div>
+      <div class="metric-sub">Simulated USDT</div>
+    </div>
+  </div>
+
+  <!-- Tether Portfolio Section -->
+  <div class="tether-section">
+    <div class="tether-card animate d1">
+      <div class="card-title" style="color: #50af95;">🏦 Tether Asset Portfolio</div>
+      <div id="tether-portfolio">
+        <div class="tether-row">
+          <div class="tether-icon usdt">₮</div>
+          <div>
+            <div class="tether-name">USDt (Tether USD)</div>
+            <div class="tether-sub">Primary managed asset · ERC-20</div>
+            <div class="tether-contract" id="usdt-contract">Loading contract...</div>
+          </div>
+          <div class="tether-balance" id="usdt-total">$—</div>
+        </div>
+        <div class="tether-row">
+          <div class="tether-icon xaut">🥇</div>
+          <div>
+            <div class="tether-name">XAUt (Tether Gold)</div>
+            <div class="tether-sub">Portfolio diversification · 1 XAUt = 1 oz Gold</div>
+            <div class="tether-contract">0x68749665FF8D2d112Fa859AA293F07A622782F38</div>
+          </div>
+          <div class="tether-balance" style="color: #ffd700;">Future</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1: Wallet + Position | Yields -->
+  <div class="grid2">
+    <div>
+      <div class="card animate d1" style="margin-bottom: 14px;">
+        <div class="card-title">🔗 Wallet</div>
+        <div id="wallet-address" class="wallet-addr" onclick="copyAddress()" title="Click to copy">Loading...</div>
+        <div class="wallet-addr-hint">Click to copy address</div>
+      </div>
+      <div class="card animate d2">
+        <div class="card-title">📍 Current Position</div>
+        <div id="position-section">
+          <div class="empty">No active position</div>
+        </div>
+        <div id="strategy-section" style="margin-top: 10px;"></div>
+        <button class="btn btn-primary" id="trigger-btn" onclick="triggerCycle()" style="margin-top: 14px;">
+          ⚡ Trigger Agent Cycle
+        </button>
+      </div>
+    </div>
+    <div class="card animate d3">
+      <div class="card-title">📊 Yield Opportunities <span class="live-badge live" id="data-source"><span class="live-dot"></span> LIVE</span></div>
+      <div id="yields-list"><div class="empty">Loading yields...</div></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Yield Chart -->
+  <div class="card animate d2" style="margin-bottom: 14px;">
+    <div class="card-title">📈 Yield History</div>
+    <div class="chart-container">
+      <canvas id="yield-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 3: Swap | Swap History -->
+  <div class="grid2">
+    <div class="card animate d1">
+      <div class="card-title">🔄 Swap Tokens</div>
+      <div class="swap-box">
+        <div class="swap-token-row">
+          <div class="form-group">
+            <label>From</label>
+            <select id="swap-from" onchange="updateSwapQuote()">
+              <option value="USDT">USDT</option>
+              <option value="ETH">ETH</option>
+              <option value="USDC">USDC</option>
+              <option value="DAI">DAI</option>
+              <option value="WBTC">WBTC</option>
+            </select>
+            <div class="token-bal" id="swap-from-bal">Balance: —</div>
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="swap-amount" placeholder="100" step="any" min="0" oninput="updateSwapQuote()">
+          </div>
+        </div>
+        <div class="swap-divider">
+          <button class="swap-divider-btn" onclick="flipSwapTokens()" title="Swap direction">⇅</button>
+        </div>
+        <div class="swap-token-row">
+          <div class="form-group">
+            <label>To</label>
+            <select id="swap-to" onchange="updateSwapQuote()">
+              <option value="USDC">USDC</option>
+              <option value="USDT">USDT</option>
+              <option value="ETH">ETH</option>
+              <option value="DAI">DAI</option>
+              <option value="WBTC">WBTC</option>
+            </select>
+            <div class="token-bal" id="swap-to-bal">Balance: —</div>
+          </div>
+          <div class="form-group">
+            <label>You receive</label>
+            <input type="text" id="swap-output" placeholder="—" readonly style="color: var(--green); font-weight: 600;">
+          </div>
+        </div>
+        <div class="swap-quote" id="swap-quote">
+          <div class="swap-quote-row"><span class="swap-quote-label">Rate</span><span class="swap-quote-value" id="sq-rate">—</span></div>
+          <div class="swap-quote-row"><span class="swap-quote-label">Fee (0.3%)</span><span class="swap-quote-value" id="sq-fee">—</span></div>
+          <div class="swap-quote-row"><span class="swap-quote-label">Price Impact</span><span class="swap-quote-value" id="sq-impact">—</span></div>
+          <div class="swap-quote-row"><span class="swap-quote-label">USD Value</span><span class="swap-quote-value" id="sq-usd">—</span></div>
+        </div>
+        <button class="btn btn-swap" id="swap-btn" onclick="executeSwapAction()">🔄 Swap</button>
+        <div class="swap-status" id="swap-status"></div>
+        <div style="font-size:10px; color: var(--text-dim); text-align:center;">Simulated swap for demo · 0.3% fee</div>
+      </div>
+    </div>
+    <div class="card animate d2">
+      <div class="card-title">📜 Swap History</div>
+      <div id="swap-history"><div class="empty">No swaps yet</div></div>
+    </div>
+  </div>
+
+  <!-- Row 4: Send ETH | Transaction History -->
+  <div class="grid2">
+    <div class="card animate d1">
+      <div class="card-title">💸 Send ETH</div>
+      <div class="send-form">
+        <div class="form-group">
+          <label for="send-to">Recipient Address</label>
+          <input type="text" id="send-to" placeholder="0x..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label for="send-amount">Amount (ETH)</label>
+          <input type="number" id="send-amount" placeholder="0.01" step="0.001" min="0">
+        </div>
+        <button class="btn btn-green" id="send-btn" onclick="sendETH()">
+          🚀 Send Transaction
+        </button>
+        <div class="send-status" id="send-status"></div>
+      </div>
+    </div>
+    <div class="card animate d2">
+      <div class="card-title">📋 Transaction History</div>
+      <div id="tx-history"><div class="empty">No transactions yet</div></div>
+    </div>
+  </div>
+
+  <!-- Row 5: AI Command Center | Live Market Prices -->
+  <div class="grid2">
+    <div class="card animate d1" style="border: 1px solid rgba(99,102,241,0.2);">
+      <div class="card-title">⚡ AI Command Center <span class="live-badge live" style="background:rgba(99,102,241,0.15);color:var(--accent);border-color:rgba(99,102,241,0.2);">INTERACTIVE</span></div>
+      <!-- Chat Messages Area -->
+      <div id="ai-chat-area" style="max-height: 280px; overflow-y: auto; margin-bottom: 10px; padding: 8px; border-radius: 10px; background: rgba(10,10,20,0.5); border: 1px solid var(--card-border); scroll-behavior: smooth;">
+        <div class="ai-msg ai-msg-system">
+          <div class="ai-msg-icon">🤖</div>
+          <div class="ai-msg-bubble ai-bubble-ai">
+            <div style="font-weight:600;font-size:11px;color:var(--accent);margin-bottom:4px;">Sentient Treasury AI</div>
+            Hi! I'm your DeFi portfolio assistant. Ask me anything about your yields, risk, or strategy.
+          </div>
+        </div>
+      </div>
+      <!-- Quick Actions -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="chip-btn" onclick="askQuick('What is my portfolio worth?')">💰 portfolio</button>
+        <button class="chip-btn" onclick="askQuick('Should I deposit or hold?')">📊 strategy</button>
+        <button class="chip-btn" onclick="askQuick('What are the risks?')">⚠️ risks</button>
+        <button class="chip-btn" onclick="askQuick('Gas costs vs yield?')">⛽ gas</button>
+        <button class="chip-btn" onclick="askQuick('Compare top protocols')">🔍 compare</button>
+      </div>
+      <!-- Input Bar -->
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="ai-question" placeholder="Ask anything about your portfolio..."
+          style="flex:1;padding:11px 14px;background:rgba(15,15,26,0.9);border:1px solid var(--card-border);border-radius:12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--card-border)'"
+          onkeydown="if(event.key==='Enter')askAI()">
+        <button class="btn btn-primary" onclick="askAI()" id="ask-ai-btn" style="padding:11px 18px;border-radius:12px;font-size:14px;">🧠</button>
+      </div>
+    </div>
+    <div class="card animate d2">
+      <div class="card-title">📡 Live Market Prices <span class="live-badge live"><span class="live-dot"></span> LIVE</span></div>
+      <div id="live-prices">
+        <div class="empty">Loading prices...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 6: Smart Rules | Reasoning Trail -->
+  <div class="grid2">
+    <div class="card animate d1" style="border: 1px solid rgba(251,191,36,0.15);">
+      <div class="card-title">⚙️ Smart Rules <span style="font-size:10px;color:var(--text-dim);font-weight:400;">Conditional Automation</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="text" id="rule-condition" placeholder="If APY drops below 3%..."
+          style="flex:1;padding:8px 12px;background:rgba(15,15,26,0.8);border:1px solid var(--card-border);border-radius:8px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;">
+        <input type="text" id="rule-action" placeholder="Then withdraw all"
+          style="flex:1;padding:8px 12px;background:rgba(15,15,26,0.8);border:1px solid var(--card-border);border-radius:8px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;">
+        <button class="btn" onclick="createRule()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:11px;padding:8px 14px;white-space:nowrap;">+ Add</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="chip-btn" onclick="quickRule('APY drops below 2%','Withdraw all and hold')">🛡️ APY guard</button>
+        <button class="chip-btn" onclick="quickRule('Gas exceeds $5','Pause agent actions')">⛽ gas limit</button>
+        <button class="chip-btn" onclick="quickRule('New protocol >5% APY','Alert for review')">🔔 opportunity</button>
+      </div>
+      <div id="rules-list"><div class="empty" style="padding:12px 0;">No rules yet. Create one above.</div></div>
+    </div>
+    <div class="card animate d2" style="border: 1px solid rgba(74,222,128,0.15);">
+      <div class="card-title">🔬 Reasoning Trail <span style="font-size:10px;color:var(--text-dim);font-weight:400;">AI Decision Process</span></div>
+      <div id="reasoning-trail"><div class="empty">Run a cycle to see AI reasoning...</div></div>
+    </div>
+  </div>
+
+  <!-- Row 7: Agent Activity Log -->
+  <div class="card animate d3" style="margin-bottom: 24px;">
+    <div class="card-title">🤖 Agent Activity Log</div>
+    <div id="activity-log"><div class="empty">Waiting for first cycle...</div></div>
+  </div>
+
+</div>
+
+<script>
+// ====== Dashboard Data ======
+async function fetchStatus() {
+  try {
+    const res = await fetch('/api/status')
+    const data = await res.json()
+    updateDashboard(data)
+  } catch (e) {
+    console.error('Status fetch error:', e)
+  }
+}
+
+function updateDashboard(data) {
+  // Metrics
+  document.getElementById('usdt-balance').textContent = '$' + (data.wallet?.usdt || 0).toLocaleString()
+  document.getElementById('eth-balance').textContent = (data.wallet?.eth || '0') + ' ETH'
+  document.getElementById('cycle-count').textContent = data.stats?.cycleCount || 0
+  document.getElementById('yield-earned').textContent = '$' + (data.stats?.totalYieldEarned || 0).toFixed(4)
+
+  // Wallet
+  if (data.wallet?.address) {
+    document.getElementById('wallet-address').textContent = data.wallet.address
+  }
+
+  // Tether Portfolio
+  if (data.portfolio) {
+    const usdtTotal = document.getElementById('usdt-total')
+    usdtTotal.textContent = '$' + (data.wallet?.usdt || 0).toLocaleString()
+    const contractEl = document.getElementById('usdt-contract')
+    if (data.portfolio.tokens?.USDT?.address) {
+      contractEl.textContent = data.portfolio.tokens.USDT.address
+    }
+  }
+
+  // Data source badge
+  if (data.yields?.length && data.yields[0].source) {
+    const badge = document.getElementById('data-source')
+    if (data.yields[0].source === 'defillama') {
+      badge.className = 'live-badge live'
+      badge.innerHTML = '<span class="live-dot"></span> LIVE · DeFi Llama'
+    } else {
+      badge.className = 'live-badge fallback'
+      badge.innerHTML = '⚠ FALLBACK DATA'
+    }
+  }
+
+  // Position
+  const pos = data.position
+  const posEl = document.getElementById('position-section')
+  if (pos?.protocol) {
+    posEl.innerHTML = `
+      <div class="position-box">
+        <div class="position-label">Active Deployment</div>
+        <div class="position-value">$${pos.amount.toLocaleString()} USDt</div>
+        <div class="position-detail">${pos.protocol} · Entry APY: ${pos.entryApy}%</div>
+        <div class="position-detail">Since: ${new Date(pos.depositedAt).toLocaleTimeString()}</div>
+      </div>`
+  } else {
+    posEl.innerHTML = '<div class="empty">No active position — USDt idle</div>'
+  }
+
+  // Strategy from latest decision
+  const strategyEl = document.getElementById('strategy-section')
+  if (data.recentActivity?.[0]?.decision?.strategy) {
+    strategyEl.innerHTML = `<div class="strategy-text">🧠 ${data.recentActivity[0].decision.strategy}</div>`
+  }
+
+  // Yields
+  const yieldsEl = document.getElementById('yields-list')
+  if (data.yields?.length) {
+    yieldsEl.innerHTML = data.yields.map((y, i) => {
+      const tvl = y.tvl || y.liquidity || 0
+      const change7d = y.apyChange7d
+      const changeStr = change7d ? `<span style="color:${change7d > 0 ? 'var(--green)' : 'var(--red)'};font-size:10px;margin-left:4px;">${change7d > 0 ? '↑' : '↓'}${Math.abs(change7d).toFixed(2)}%</span>` : ''
+      return `
+      <div class="yield-row">
+        <div>
+          <div class="yield-name">${y.name}${i === 0 ? '<span class="best-badge">★ BEST</span>' : ''}</div>
+          <div class="yield-protocol">${y.protocol} · ${y.chain} · $${(tvl / 1e6).toFixed(0)}M TVL</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <div class="yield-apy">${y.apy}%${changeStr}</div>
+          <span class="yield-risk risk-${y.risk}">${y.risk}</span>
+        </div>
+      </div>`
+    }).join('')
+  }
+
+  // Yield Chart
+  if (data.yieldHistory?.length > 1) {
+    renderChart(data.yieldHistory)
+  }
+
+  // Reasoning Trail
+  updateReasoningTrail(data)
+
+  // Activity log
+  const logEl = document.getElementById('activity-log')
+  if (data.recentActivity?.length) {
+    logEl.innerHTML = data.recentActivity.map(entry => {
+      const action = entry.decision?.action || 'RUNNING'
+      const confidence = entry.decision?.confidence || 0
+      const confColor = confidence > 0.7 ? 'var(--green)' : confidence > 0.4 ? 'var(--yellow)' : 'var(--red)'
+      const confWidth = Math.round(confidence * 100)
+      const steps = (entry.steps || []).map(s =>
+        `<div class="log-step">· ${s.step}${s.detail ? ': <span>' + s.detail + '</span>' : ''}</div>`
+      ).join('')
+      const txHash = (entry.steps || []).find(s => s.txHash)?.txHash
+      return `
+        <div class="log-entry">
+          <div class="log-header">
+            <span class="log-id">${entry.id}</span>
+            <span class="log-time">${new Date(entry.timestamp).toLocaleTimeString()}</span>
+          </div>
+          <span class="log-action action-${action}">${action}</span>
+          ${entry.decision?.reasoning ? `<div class="log-reasoning">${entry.decision.reasoning}</div>` : ''}
+          <div class="confidence-bar"><div class="confidence-fill" style="width:${confWidth}%;background:${confColor};"></div></div>
+          ${steps}
+          ${txHash ? `<a class="tx-hash-link" href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" rel="noopener">Tx: ${txHash.slice(0,16)}... ↗</a>` : ''}
+        </div>`
+    }).join('')
+  } else {
+    logEl.innerHTML = '<div class="empty">Waiting for first cycle...</div>'
+  }
+}
+
+// ====== Yield History Chart (Canvas) ======
+const colorPalette = ['#6366f1','#4ade80','#f59e0b','#3b82f6','#ec4899','#14b8a6','#a78bfa','#f87171','#22d3ee','#fbbf24']
+const colorMap = {}
+function getColor(name) {
+  if (!colorMap[name]) colorMap[name] = colorPalette[Object.keys(colorMap).length % colorPalette.length]
+  return colorMap[name]
+}
+
+function renderChart(history) {
+  const canvas = document.getElementById('yield-chart')
+  const ctx = canvas.getContext('2d')
+  const dpr = window.devicePixelRatio || 1
+  const rect = canvas.parentElement.getBoundingClientRect()
+
+  canvas.width = rect.width * dpr
+  canvas.height = rect.height * dpr
+  canvas.style.width = rect.width + 'px'
+  canvas.style.height = rect.height + 'px'
+  ctx.scale(dpr, dpr)
+
+  const W = rect.width, H = rect.height
+  const pad = { top: 20, right: 20, bottom: 30, left: 40 }
+  const chartW = W - pad.left - pad.right
+  const chartH = H - pad.top - pad.bottom
+
+  ctx.clearRect(0, 0, W, H)
+
+  // Collect ALL protocol names from actual data (dynamic)
+  const protoSet = new Set()
+  history.forEach(h => h.yields.forEach(y => protoSet.add(y.name)))
+  const protocols = [...protoSet].slice(0, 6) // top 6 for readability
+  const maxPts = history.length
+
+  if (maxPts < 2) {
+    ctx.fillStyle = '#475569'
+    ctx.font = '12px Inter, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('Collecting data... chart updates every minute', W/2, H/2)
+    return
+  }
+
+  // Find min/max APY
+  let minApy = Infinity, maxApy = -Infinity
+  history.forEach(h => h.yields.forEach(y => {
+    if (y.apy < minApy) minApy = y.apy
+    if (y.apy > maxApy) maxApy = y.apy
+  }))
+  minApy = Math.max(0, Math.floor(minApy - 0.5))
+  maxApy = Math.ceil(maxApy + 0.5)
+  const apyRange = maxApy - minApy || 1
+
+  // Grid + Y labels
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'
+  ctx.lineWidth = 1
+  ctx.fillStyle = '#475569'
+  ctx.font = '10px Inter, sans-serif'
+  ctx.textAlign = 'right'
+  for (let i = 0; i <= 4; i++) {
+    const val = minApy + (apyRange * i / 4)
+    const y = pad.top + chartH - (chartH * i / 4)
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke()
+    ctx.fillText(val.toFixed(1) + '%', pad.left - 6, y + 3)
+  }
+
+  // X axis time labels
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#475569'
+  const step = Math.max(1, Math.floor(maxPts / 5))
+  for (let i = 0; i < maxPts; i += step) {
+    const x = pad.left + (chartW * i / (maxPts - 1))
+    const t = new Date(history[i].timestamp)
+    ctx.fillText(t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), x, H - 8)
+  }
+
+  // Draw lines per protocol
+  protocols.forEach(proto => {
+    const color = getColor(proto)
+    ctx.strokeStyle = color
+    ctx.lineWidth = 2
+    ctx.lineJoin = 'round'
+    ctx.beginPath()
+
+    let first = true, lastX, lastY
+    history.forEach((h, i) => {
+      const yd = h.yields.find(y => y.name === proto)
+      if (!yd) return
+      const x = pad.left + (chartW * i / (maxPts - 1 || 1))
+      const y = pad.top + chartH - (chartH * (yd.apy - minApy) / apyRange)
+      if (first) { ctx.moveTo(x, y); first = false; }
+      else ctx.lineTo(x, y)
+      lastX = x; lastY = y
+    })
+    ctx.stroke()
+
+    // Gradient fill under the line
+    if (!first && lastX) {
+      ctx.lineTo(lastX, pad.top + chartH)
+      ctx.lineTo(pad.left, pad.top + chartH)
+      ctx.closePath()
+      const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH)
+      grad.addColorStop(0, color + '18')
+      grad.addColorStop(1, color + '00')
+      ctx.fillStyle = grad
+      ctx.fill()
+    }
+
+    // Dot on latest point
+    if (lastX && lastY) {
+      ctx.fillStyle = color
+      ctx.beginPath(); ctx.arc(lastX, lastY, 3, 0, Math.PI * 2); ctx.fill()
+    }
+  })
+
+  // Legend
+  ctx.font = '10px Inter, sans-serif'
+  let legendX = pad.left
+  protocols.slice(0, 4).forEach(proto => {
+    const color = getColor(proto)
+    const shortName = proto.length > 18 ? proto.substring(0, 18) + '…' : proto
+    ctx.fillStyle = color
+    ctx.beginPath(); ctx.arc(legendX + 4, H - 10, 3, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#64748b'
+    ctx.textAlign = 'left'
+    ctx.fillText(shortName, legendX + 10, H - 7)
+    legendX += ctx.measureText(shortName).width + 24
+  })
+}
+
+// ====== Actions ======
+async function triggerCycle() {
+  const btn = document.getElementById('trigger-btn')
+  btn.disabled = true
+  btn.textContent = '⏳ Running cycle...'
+  try {
+    await fetch('/api/trigger', { method: 'POST' })
+    await fetchStatus()
+  } catch (e) { console.error(e) }
+  btn.disabled = false
+  btn.textContent = '⚡ Trigger Agent Cycle'
+}
+
+function copyAddress() {
+  const addr = document.getElementById('wallet-address').textContent
+  navigator.clipboard.writeText(addr).then(() => {
+    const hint = document.querySelector('.wallet-addr-hint')
+    hint.textContent = '✅ Copied!'
+    setTimeout(() => { hint.textContent = 'Click to copy address' }, 1500)
+  })
+}
+
+// ====== Send ETH ======
+async function sendETH() {
+  const toInput = document.getElementById('send-to')
+  const amountInput = document.getElementById('send-amount')
+  const btn = document.getElementById('send-btn')
+  const to = toInput.value.trim()
+  const amount = amountInput.value.trim()
+
+  if (!to || !amount) { showSendStatus('Please fill in both fields', 'error'); return }
+  if (!/^0x[a-fA-F0-9]{40}$/.test(to)) { showSendStatus('Invalid Ethereum address', 'error'); return }
+  if (parseFloat(amount) <= 0) { showSendStatus('Amount must be > 0', 'error'); return }
+
+  btn.disabled = true
+  btn.textContent = '⏳ Sending...'
+  showSendStatus('Submitting transaction...', 'loading')
+
+  try {
+    const res = await fetch('/api/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, amount: parseFloat(amount) })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showSendStatus('✅ Sent! Tx: ' + data.transaction.hash.slice(0, 20) + '...', 'success')
+      toInput.value = ''
+      amountInput.value = ''
+      fetchTransactions()
+      fetchStatus()
+    } else {
+      showSendStatus('❌ ' + data.error, 'error')
+    }
+  } catch (e) {
+    showSendStatus('❌ ' + e.message, 'error')
+  }
+  btn.disabled = false
+  btn.textContent = '🚀 Send Transaction'
+}
+
+function showSendStatus(msg, type) {
+  const el = document.getElementById('send-status')
+  el.textContent = msg
+  el.className = 'send-status ' + type
+}
+
+// ====== Transaction History ======
+async function fetchTransactions() {
+  try {
+    const res = await fetch('/api/transactions')
+    const txs = await res.json()
+    const el = document.getElementById('tx-history')
+    if (!txs.length) { el.innerHTML = '<div class="empty">No transactions yet</div>'; return }
+    el.innerHTML = txs.map(tx => `
+      <div class="tx-row">
+        <div>
+          <div class="tx-to">${tx.to.slice(0, 8)}...${tx.to.slice(-6)}</div>
+          <div class="tx-time">${new Date(tx.timestamp).toLocaleString()}</div>
+          ${tx.hash ? `<a class="tx-link" href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">View on Etherscan ↗</a>` : ''}
+        </div>
+        <div class="tx-amount">-${tx.amount} ETH</div>
+      </div>`).join('')
+  } catch (e) { console.error('Tx fetch error:', e) }
+}
+
+// ====== Swap ======
+let quoteTimer = null
+
+async function updateSwapQuote() {
+  clearTimeout(quoteTimer)
+  quoteTimer = setTimeout(async () => {
+    const fromToken = document.getElementById('swap-from').value
+    const toToken = document.getElementById('swap-to').value
+    const amount = parseFloat(document.getElementById('swap-amount').value)
+    const quoteEl = document.getElementById('swap-quote')
+    const outputEl = document.getElementById('swap-output')
+
+    if (!amount || amount <= 0 || fromToken === toToken) {
+      quoteEl.classList.remove('visible')
+      outputEl.value = ''
+      return
+    }
+
+    try {
+      const res = await fetch('/api/swap/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromToken, toToken, amount })
+      })
+      const q = await res.json()
+      if (q.error) { quoteEl.classList.remove('visible'); outputEl.value = ''; return }
+
+      outputEl.value = q.outputAmount + ' ' + toToken
+      document.getElementById('sq-rate').textContent = `1 ${fromToken} = ${q.rate} ${toToken}`
+      document.getElementById('sq-fee').textContent = q.fee + ' ' + toToken
+      document.getElementById('sq-impact').textContent = q.priceImpact + '%'
+      document.getElementById('sq-usd').textContent = '$' + q.usdValue.toLocaleString()
+      quoteEl.classList.add('visible')
+    } catch (e) { console.error('Quote error:', e) }
+  }, 300)
+}
+
+function flipSwapTokens() {
+  const from = document.getElementById('swap-from')
+  const to = document.getElementById('swap-to')
+  const tmp = from.value
+  from.value = to.value
+  to.value = tmp
+  updateSwapQuote()
+  fetchTokenBalances()
+}
+
+async function executeSwapAction() {
+  const fromToken = document.getElementById('swap-from').value
+  const toToken = document.getElementById('swap-to').value
+  const amount = parseFloat(document.getElementById('swap-amount').value)
+  const btn = document.getElementById('swap-btn')
+  const statusEl = document.getElementById('swap-status')
+
+  if (!amount || amount <= 0) { showSwapStatus('Enter a valid amount', 'error'); return }
+  if (fromToken === toToken) { showSwapStatus('Cannot swap same token', 'error'); return }
+
+  btn.disabled = true
+  btn.textContent = '⏳ Swapping...'
+  showSwapStatus('Executing swap...', 'loading')
+
+  try {
+    const res = await fetch('/api/swap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromToken, toToken, amount })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showSwapStatus(`✅ Swapped ${amount} ${fromToken} → ${data.swap.outputAmount} ${toToken}`, 'success')
+      document.getElementById('swap-amount').value = ''
+      document.getElementById('swap-output').value = ''
+      document.getElementById('swap-quote').classList.remove('visible')
+      fetchTokenBalances()
+      fetchSwapHistory()
+      fetchStatus()
+    } else {
+      showSwapStatus('❌ ' + data.error, 'error')
+    }
+  } catch (e) {
+    showSwapStatus('❌ ' + e.message, 'error')
+  }
+  btn.disabled = false
+  btn.textContent = '🔄 Swap'
+}
+
+function showSwapStatus(msg, type) {
+  const el = document.getElementById('swap-status')
+  el.textContent = msg
+  el.className = 'swap-status ' + type
+}
+
+async function fetchSwapHistory() {
+  try {
+    const res = await fetch('/api/swap/history')
+    const swaps = await res.json()
+    const el = document.getElementById('swap-history')
+    if (!swaps.length) { el.innerHTML = '<div class="empty">No swaps yet</div>'; return }
+    el.innerHTML = swaps.map(s => `
+      <div class="swap-hist-row">
+        <div>
+          <div class="swap-hist-pair">${s.inputAmount} ${s.fromToken} → ${s.outputAmount} ${s.toToken}</div>
+          <div class="swap-hist-detail">${new Date(s.timestamp).toLocaleString()} · Fee: ${s.fee} ${s.toToken}</div>
+        </div>
+        <div class="swap-hist-amount">$${s.usdValue}</div>
+      </div>`).join('')
+  } catch (e) { console.error('Swap history error:', e) }
+}
+
+async function fetchTokenBalances() {
+  try {
+    const res = await fetch('/api/tokens')
+    const tokens = await res.json()
+    const fromToken = document.getElementById('swap-from').value
+    const toToken = document.getElementById('swap-to').value
+    const fromData = tokens.find(t => t.symbol === fromToken)
+    const toData = tokens.find(t => t.symbol === toToken)
+    document.getElementById('swap-from-bal').textContent = fromData ? `Balance: ${fromData.balance} ${fromToken}` : 'Balance: —'
+    document.getElementById('swap-to-bal').textContent = toData ? `Balance: ${toData.balance} ${toToken}` : 'Balance: —'
+  } catch (e) { console.error('Token fetch error:', e) }
+}
+
+// ====== AI Command Center ======
+async function askAI() {
+  const input = document.getElementById('ai-question')
+  const question = input.value.trim()
+  if (!question) return
+
+  const btn = document.getElementById('ask-ai-btn')
+  const chatArea = document.getElementById('ai-chat-area')
+
+  // Add user message bubble
+  chatArea.innerHTML += `
+    <div class="ai-msg ai-msg-user">
+      <div class="ai-msg-icon">👤</div>
+      <div class="ai-msg-bubble ai-bubble-user">${question}</div>
+    </div>`
+
+  // Clear input
+  input.value = ''
+  btn.disabled = true
+  btn.textContent = '⏳'
+
+  // Add typing indicator
+  const typingId = 'typing-' + Date.now()
+  chatArea.innerHTML += `
+    <div class="ai-msg" id="${typingId}">
+      <div class="ai-msg-icon">🤖</div>
+      <div class="ai-msg-bubble ai-bubble-ai">
+        <div class="ai-typing">
+          <div class="ai-typing-dot"></div>
+          <div class="ai-typing-dot"></div>
+          <div class="ai-typing-dot"></div>
+        </div>
+      </div>
+    </div>`
+  chatArea.scrollTop = chatArea.scrollHeight
+
+  try {
+    const res = await fetch('/api/ask-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+
+    // Replace typing with actual response
+    const typingEl = document.getElementById(typingId)
+    if (typingEl) {
+      typingEl.innerHTML = `
+        <div class="ai-msg-icon">🤖</div>
+        <div class="ai-msg-bubble ai-bubble-ai">
+          ${data.answer}
+          <div class="ai-msg-model"><span>${data.model}</span> via ${data.provider}</div>
+        </div>`
+    }
+  } catch (e) {
+    const typingEl = document.getElementById(typingId)
+    if (typingEl) {
+      typingEl.innerHTML = `
+        <div class="ai-msg-icon">⚠️</div>
+        <div class="ai-msg-bubble ai-bubble-ai" style="border-color:rgba(248,113,113,0.2);">
+          Error: ${e.message}
+        </div>`
+    }
+  }
+
+  chatArea.scrollTop = chatArea.scrollHeight
+  btn.disabled = false
+  btn.textContent = '🧠'
+}
+
+function askQuick(question) {
+  document.getElementById('ai-question').value = question
+  askAI()
+}
+
+// ====== Live Prices ======
+async function fetchPrices() {
+  try {
+    const res = await fetch('/api/prices')
+    const prices = await res.json()
+    const el = document.getElementById('live-prices')
+
+    const icons = { ETH: '⟠', USDt: '₮', XAUt: '🥇', BTC: '₿' }
+    const colors = { ETH: '#627eea', USDt: '#50af95', XAUt: '#ffd700', BTC: '#f7931a' }
+
+    el.innerHTML = Object.entries(prices)
+      .filter(([k]) => ['ETH', 'USDt', 'XAUt', 'BTC'].includes(k))
+      .map(([symbol, data]) => {
+        const change = data.change24h || 0
+        const changeClass = change >= 0 ? 'up' : 'down'
+        const changeIcon = change >= 0 ? '↑' : '↓'
+        return `
+        <div class="price-row">
+          <div style="display:flex;align-items:center;">
+            <span class="price-icon">${icons[symbol] || '•'}</span>
+            <span class="price-symbol" style="color:${colors[symbol]}">${symbol}</span>
+          </div>
+          <div style="display:flex;align-items:center;">
+            <span class="price-value">$${data.price.toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+            <span class="price-change ${changeClass}">${changeIcon}${Math.abs(change).toFixed(2)}%</span>
+          </div>
+        </div>`
+      }).join('')
+  } catch (e) { console.error('Price fetch error:', e) }
+}
+
+// ====== Smart Rules ======
+async function createRule() {
+  const condition = document.getElementById('rule-condition').value.trim()
+  const action = document.getElementById('rule-action').value.trim()
+  if (!condition || !action) return
+
+  try {
+    await fetch('/api/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ condition, action, label: `If ${condition} → ${action}` })
+    })
+    document.getElementById('rule-condition').value = ''
+    document.getElementById('rule-action').value = ''
+    fetchRules()
+  } catch (e) { console.error('Rule creation error:', e) }
+}
+
+function quickRule(condition, action) {
+  document.getElementById('rule-condition').value = condition
+  document.getElementById('rule-action').value = action
+  createRule()
+}
+
+async function deleteRule(id) {
+  try {
+    await fetch('/api/rules/' + id, { method: 'DELETE' })
+    fetchRules()
+  } catch (e) { console.error('Rule delete error:', e) }
+}
+
+async function fetchRules() {
+  try {
+    const res = await fetch('/api/rules')
+    const rules = await res.json()
+    const el = document.getElementById('rules-list')
+    if (!rules.length) { el.innerHTML = '<div class="empty" style="padding:12px 0;">No rules yet. Create one above.</div>'; return }
+    el.innerHTML = rules.map(r => `
+      <div class="rule-item">
+        <div class="rule-label">${r.label}</div>
+        <span class="rule-badge">${r.active ? 'ACTIVE' : 'OFF'}</span>
+        <button class="rule-delete" onclick="deleteRule('${r.id}')" title="Delete">✕</button>
+      </div>
+    `).join('')
+  } catch (e) { console.error('Rules fetch error:', e) }
+}
+
+// ====== Reasoning Trail ======
+function updateReasoningTrail(data) {
+  const el = document.getElementById('reasoning-trail')
+  const latest = data.recentActivity?.[0]
+  if (!latest || !latest.decision) {
+    el.innerHTML = '<div class="empty">Run a cycle to see AI reasoning...</div>'
+    return
+  }
+
+  const d = latest.decision
+  const steps = [
+    { label: 'Action', text: `<strong>${d.action}</strong> with confidence ${((d.confidence || 0) * 100).toFixed(0)}%` },
+    { label: 'Reasoning', text: d.reasoning || 'No reasoning provided' },
+    { label: 'Risk Assessment', text: d.riskAssessment || 'N/A' },
+    { label: 'Gas Analysis', text: d.gasCostAnalysis || 'N/A' },
+    { label: 'Strategy', text: d.strategy || 'N/A' }
+  ]
+
+  el.innerHTML = steps.map((s, i) => `
+    <div class="reason-step">
+      <div class="reason-num">${i + 1}</div>
+      <div>
+        <div class="reason-label">${s.label}</div>
+        <div class="reason-text">${s.text}</div>
+      </div>
+    </div>
+  `).join('') + `<div style="font-size:10px;color:var(--text-dim);margin-top:6px;">Cycle ${latest.id} · ${new Date(latest.timestamp).toLocaleTimeString()}</div>`
+}
+
+// ====== Init ======
+fetchStatus()
+fetchTransactions()
+fetchSwapHistory()
+fetchTokenBalances()
+fetchPrices()
+fetchRules()
+setInterval(fetchStatus, 5000)
+setInterval(fetchTransactions, 10000)
+setInterval(fetchSwapHistory, 10000)
+setInterval(fetchTokenBalances, 10000)
+setInterval(fetchPrices, 30000)
+setInterval(fetchRules, 10000)
+window.addEventListener('resize', fetchStatus)
+</script>
+</body>
+</html>
